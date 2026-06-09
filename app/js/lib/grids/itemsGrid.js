@@ -568,10 +568,12 @@ function bailiScoreBandColumnStyle(params) {
         if (!params || params.value == undefined) return;
         const value = Number(params.value) || 0;
 
-        // Reuse old continuous score gradient style, but normalize to Baili range.
-        let percent = value / 35;
-        percent = Math.min(1, percent);
-        percent = Math.max(0, percent);
+        // Map to old-style gradient stops by filter bands:
+        // 0 -> 0%, 1-3 -> 30%, 5-9 -> 55%, 10+ -> 80%
+        let percent = 0.0;
+        if (value >= 10) percent = 0.8;
+        else if (value >= 5) percent = 0.55;
+        else if (value >= 1) percent = 0.3;
 
         const color = scoreGradient.gradient.rgbAt(percent);
         return { backgroundColor: color.toHexString() };
@@ -637,11 +639,11 @@ function applyBailiScoring(items) {
     return (items || []).map(item => {
         const baili = calculateBailiScore(item);
         item.bailiScore = Number(baili.score) || 0;
-        item.bailiClass = baili.bailiClass;
+        item.bailiClass = baili.bailiClass == "未分类" ? "" : baili.bailiClass;
         const conv = calculateBestBailiConversion(item, baili);
         item.bailiConvScore = Number(conv.score) || 0;
-        item.bailiConvClass = conv.bailiClass;
-        item.bailiConvPlan = conv.plan;
+        item.bailiConvClass = conv.bailiClass == "未分类" ? "" : conv.bailiClass;
+        item.bailiConvPlan = conv.plan == "No conversion" ? "" : conv.plan;
         return item;
     });
 }
