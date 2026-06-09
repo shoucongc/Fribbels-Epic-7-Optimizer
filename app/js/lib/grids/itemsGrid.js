@@ -635,6 +635,16 @@ const WSS_WEIGHTS = {
     Health: (3.09 / 174),
 };
 
+// Baili v5 rule interpretation notes (Chinese rule text -> internal enums):
+// - 效果命中 == 效命 == 命中 -> EffectivenessPercent
+// - 效果抗性 == 效抗 == 抗性 -> EffectResistancePercent
+// - 生命套 == 血套 -> HealthSet
+// - 防御套 == 防套 -> DefenseSet
+// - 攻击套 == 攻套 -> AttackSet
+// - 爆率 == 暴率 -> CriticalHitChancePercent
+// - 爆伤 == 暴伤 == 破灭 -> CriticalHitDamagePercent / DestructionSet (set context)
+// - 贯穿 == 穿透 -> PenetrationSet
+// - 双爆 -> either Crit Chance OR Crit Damage (not both required)
 const SHUCHU_EFFECTIVE_STATS = ["AttackPercent", "Attack", "CriticalHitChancePercent", "CriticalHitDamagePercent", "Speed"];
 const SHUCHU_BIBAO_EFFECTIVE_STATS = ["AttackPercent", "Attack", "CriticalHitDamagePercent", "Speed"];
 const KANGTAN_EFFECTIVE_STATS = ["HealthPercent", "Health", "DefensePercent", "Defense", "Speed", "EffectResistancePercent"];
@@ -658,6 +668,10 @@ function getEffectiveGearScore(stats, effectiveStats) {
 
 function hasAnyStat(stats, names) {
     return names.some(name => (stats[name] || 0) > 0);
+}
+
+function hasDualCrit(stats) {
+    return hasStat(stats, "CriticalHitChancePercent") || hasStat(stats, "CriticalHitDamagePercent");
 }
 
 function hasStat(stats, name) {
@@ -745,7 +759,10 @@ function matchShuchu(item, stats) {
         Ring: ["AttackPercent"],
         Boots: ["Speed", "AttackPercent"],
     };
-    return matchSet(item, sets) && hasAnyStat(stats, SHUCHU_EFFECTIVE_STATS) && matchMain(item, mainByGear[item.gear] || []);
+    // Explicitly keep "双爆" semantics as OR when applicable.
+    const hasOutputStats = hasAnyStat(stats, SHUCHU_EFFECTIVE_STATS);
+    const hasDoubleCrit = hasDualCrit(stats);
+    return matchSet(item, sets) && hasOutputStats && (hasDoubleCrit || hasAnyStat(stats, ["AttackPercent", "Attack", "Speed"])) && matchMain(item, mainByGear[item.gear] || []);
 }
 
 function shuchuScore(item, score) {
