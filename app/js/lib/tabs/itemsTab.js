@@ -29,6 +29,9 @@ const filters = {
     duplicateFilter: null,
     equippedOrNotFilter: null,
     modifyFilter: null,
+    bailiFilter: null,
+    bailiConvFilter: null,
+    gearScoreFilter: null,
 }
 
 module.exports = {
@@ -363,7 +366,25 @@ const elementsByFilter = {
         "modifyEffFilter",
         "modifyResFilter",
         "modifySpeedFilter",
-    ]
+    ],
+    bailiFilter: [
+        "baili0Filter",
+        "baili1to3Filter",
+        "baili5to9Filter",
+        "baili10plusFilter",
+    ],
+    bailiConvFilter: [
+        "bailiConv0Filter",
+        "bailiConv1to3Filter",
+        "bailiConv5to9Filter",
+        "bailiConv10plusFilter",
+    ],
+    gearScoreFilter: [
+        "gearScoreUnder70Filter",
+        "gearScore70to72Filter",
+        "gearScore73to74Filter",
+        "gearScore75plusFilter",
+    ],
 }
 
 function setupEventListeners() {
@@ -451,6 +472,27 @@ function setupEventListeners() {
     setupFilterListener("plus0Filter", "enhanceFilter", "plus0")
 
     setupClearListener("clearEnhanceFilter", "enhanceFilter")
+
+    // Baili score
+    setupFilterListener("baili0Filter", "bailiFilter", "baili0")
+    setupFilterListener("baili1to3Filter", "bailiFilter", "baili1to3")
+    setupFilterListener("baili5to9Filter", "bailiFilter", "baili5to9")
+    setupFilterListener("baili10plusFilter", "bailiFilter", "baili10plus")
+    setupClearListener("clearBailiFilter", "bailiFilter")
+
+    // Baili converted score
+    setupFilterListener("bailiConv0Filter", "bailiConvFilter", "bailiConv0")
+    setupFilterListener("bailiConv1to3Filter", "bailiConvFilter", "bailiConv1to3")
+    setupFilterListener("bailiConv5to9Filter", "bailiConvFilter", "bailiConv5to9")
+    setupFilterListener("bailiConv10plusFilter", "bailiConvFilter", "bailiConv10plus")
+    setupClearListener("clearBailiConvFilter", "bailiConvFilter")
+
+    // Gear score (reforgedWss)
+    setupFilterListener("gearScoreUnder70Filter", "gearScoreFilter", "gsUnder70")
+    setupFilterListener("gearScore70to72Filter", "gearScoreFilter", "gs70to72")
+    setupFilterListener("gearScore73to74Filter", "gearScoreFilter", "gs73to74")
+    setupFilterListener("gearScore75plusFilter", "gearScoreFilter", "gs75plus")
+    setupClearListener("clearGearScoreFilter", "gearScoreFilter")
 
     // Modify
     setupFilterListener("modifyAtkFilter", "modifyFilter", "Attack")

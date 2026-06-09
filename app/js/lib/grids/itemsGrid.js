@@ -95,12 +95,12 @@ module.exports = {
                 {headerName: i18next.t('Def'), field: 'augmentedStats.Defense', cellRenderer: (params) => params.value == 0 ? "" : params.value},
                 {headerName: i18next.t('Eff'), field: 'augmentedStats.EffectivenessPercent', cellRenderer: (params) => params.value == 0 ? "" : params.value},
                 {headerName: i18next.t('Res'), field: 'augmentedStats.EffectResistancePercent', cellRenderer: (params) => params.value == 0 ? "" : params.value},
-                {headerName: i18next.t('Score'), field: 'reforgedWss', width: 50, cellStyle: scoreColumnGradient},
-                {headerName: i18next.t('dScore'), field: 'dpsWss', width: 50, cellStyle: scoreColumnGradient},
-                {headerName: i18next.t('sScore'), field: 'supportWss', width: 50, cellStyle: scoreColumnGradient},
-                {headerName: i18next.t('cScore'), field: 'combatWss', width: 50, cellStyle: scoreColumnGradient},
-                {headerName: i18next.t('Baili Score'), field: 'bailiScore', width: 60, cellStyle: scoreColumnGradient, filter: 'agNumberColumnFilter'},
-                {headerName: i18next.t('Baili Class'), field: 'bailiClass', width: 170},
+                {headerName: i18next.t('Score'), field: 'reforgedWss', width: 50, cellStyle: gearScoreBandColumnStyle},
+                {headerName: i18next.t('Baili Score'), field: 'bailiScore', width: 75, cellStyle: bailiScoreBandColumnStyle, filter: 'agNumberColumnFilter'},
+                {headerName: i18next.t('Baili Class'), field: 'bailiClass', width: 200},
+                {headerName: i18next.t('Baili Conv Score'), field: 'bailiConvScore', width: 115, cellStyle: bailiScoreBandColumnStyle, filter: 'agNumberColumnFilter'},
+                {headerName: i18next.t('Baili Conv Class'), field: 'bailiConvClass', width: 200},
+                {headerName: i18next.t('Baili Conv Plan'), field: 'bailiConvPlan', width: 220},
                 {headerName: i18next.t('Equipped'), field: 'equippedByName', width: 120, cellRenderer: (params) => renderStat(i18next.t(params.value))},
                 // {headerName: i18next.t('Mconf'), field: 'mconfidence', width: 50},
                 // {headerName: i18next.t('Material'), field: 'material', width: 120},
@@ -206,6 +206,9 @@ module.exports = {
         const duplicateFilter = filters.duplicateFilter;
         const equippedOrNotFilter = filters.equippedOrNotFilter;
         const modifyFilter = filters.modifyFilter;
+        const bailiFilter = filters.bailiFilter;
+        const bailiConvFilter = filters.bailiConvFilter;
+        const gearScoreFilter = filters.gearScoreFilter;
 
         const setFilterComponent = itemsGrid.gridOptions.api.getFilterInstance('set');
         if (!setFilter) {
@@ -431,6 +434,65 @@ module.exports = {
             }
         }
 
+        const bailiFilterComponent = itemsGrid.gridOptions.api.getFilterInstance('bailiScore');
+        if (!bailiFilter) {
+            bailiFilterComponent.setModel(null);
+        } else if (bailiFilter == "baili0") {
+            bailiFilterComponent.setModel({ type: 'equals', filter: 0 });
+        } else if (bailiFilter == "baili1to3") {
+            bailiFilterComponent.setModel({
+                filterType: 'number',
+                operator: 'AND',
+                condition1: { filterType: 'number', type: 'greaterThanOrEqual', filter: 1 },
+                condition2: { filterType: 'number', type: 'lessThan', filter: 4 }
+            });
+        } else if (bailiFilter == "baili5to9") {
+            bailiFilterComponent.setModel({
+                filterType: 'number',
+                operator: 'AND',
+                condition1: { filterType: 'number', type: 'greaterThanOrEqual', filter: 5 },
+                condition2: { filterType: 'number', type: 'lessThan', filter: 10 }
+            });
+        } else if (bailiFilter == "baili10plus") {
+            bailiFilterComponent.setModel({ type: 'greaterThanOrEqual', filter: 10 });
+        }
+
+        const bailiConvFilterComponent = itemsGrid.gridOptions.api.getFilterInstance('bailiConvScore');
+        if (!bailiConvFilter) {
+            bailiConvFilterComponent.setModel(null);
+        } else if (bailiConvFilter == "bailiConv0") {
+            bailiConvFilterComponent.setModel({ type: 'equals', filter: 0 });
+        } else if (bailiConvFilter == "bailiConv1to3") {
+            bailiConvFilterComponent.setModel({
+                filterType: 'number',
+                operator: 'AND',
+                condition1: { filterType: 'number', type: 'greaterThanOrEqual', filter: 1 },
+                condition2: { filterType: 'number', type: 'lessThan', filter: 4 }
+            });
+        } else if (bailiConvFilter == "bailiConv5to9") {
+            bailiConvFilterComponent.setModel({
+                filterType: 'number',
+                operator: 'AND',
+                condition1: { filterType: 'number', type: 'greaterThanOrEqual', filter: 5 },
+                condition2: { filterType: 'number', type: 'lessThan', filter: 10 }
+            });
+        } else if (bailiConvFilter == "bailiConv10plus") {
+            bailiConvFilterComponent.setModel({ type: 'greaterThanOrEqual', filter: 10 });
+        }
+
+        const gearScoreFilterComponent = itemsGrid.gridOptions.api.getFilterInstance('reforgedWss');
+        if (!gearScoreFilter) {
+            gearScoreFilterComponent.setModel(null);
+        } else if (gearScoreFilter == "gsUnder70") {
+            gearScoreFilterComponent.setModel({ type: 'lessThan', filter: 70 });
+        } else if (gearScoreFilter == "gs70to72") {
+            gearScoreFilterComponent.setModel({ filterType: 'number', type: 'inRange', filter: 70, filterTo: 73 });
+        } else if (gearScoreFilter == "gs73to74") {
+            gearScoreFilterComponent.setModel({ filterType: 'number', type: 'inRange', filter: 73, filterTo: 75 });
+        } else if (gearScoreFilter == "gs75plus") {
+            gearScoreFilterComponent.setModel({ type: 'greaterThanOrEqual', filter: 75 });
+        }
+
         itemsGrid.gridOptions.api.onFilterChanged();
         updateSelectedCount();
     }
@@ -502,6 +564,32 @@ function scoreColumnGradient(params) {
     } catch (e) {console.error(e)}
 }
 
+function bailiScoreBandColumnStyle(params) {
+    try {
+        if (!params || params.value == undefined) return;
+        const value = Number(params.value) || 0;
+
+        // Baili ranges: 0, 1-3, 5-9, 10+
+        if (value >= 10) return { backgroundColor: '#58D9F9' };
+        if (value >= 5) return { backgroundColor: '#7CFFB2' };
+        if (value >= 1) return { backgroundColor: '#FDDD60' };
+        return { backgroundColor: '#FF6E76' };
+    } catch (e) { console.error(e) }
+}
+
+function gearScoreBandColumnStyle(params) {
+    try {
+        if (!params || params.value == undefined) return;
+        const value = Number(params.value) || 0;
+
+        // Gear score ranges: <70, 70-72, 73-74, 75+
+        if (value >= 75) return { backgroundColor: '#58D9F9' };
+        if (value >= 73) return { backgroundColor: '#7CFFB2' };
+        if (value >= 70) return { backgroundColor: '#FDDD60' };
+        return { backgroundColor: '#FF6E76' };
+    } catch (e) { console.error(e) }
+}
+
 function aggregateCurrentGearStats(items) {
     console.log("Aggregating", items)
     const statsToAggregate = [
@@ -546,6 +634,10 @@ function applyBailiScoring(items) {
         const baili = calculateBailiScore(item);
         item.bailiScore = Number(baili.score) || 0;
         item.bailiClass = baili.bailiClass;
+        const conv = calculateBestBailiConversion(item, baili);
+        item.bailiConvScore = Number(conv.score) || 0;
+        item.bailiConvClass = conv.bailiClass;
+        item.bailiConvPlan = conv.plan;
         return item;
     });
 }
@@ -610,6 +702,110 @@ function calculateBailiScore(item) {
         score: score,
         bailiClass: classText
     };
+}
+
+const CONVERTIBLE_STATS_BY_GEAR = {
+    Weapon: [
+        "AttackPercent", "Health", "HealthPercent", "Speed",
+        "CriticalHitChancePercent", "CriticalHitDamagePercent",
+        "EffectivenessPercent", "EffectResistancePercent"
+    ],
+    Helmet: [
+        "Attack", "AttackPercent", "Defense", "DefensePercent", "HealthPercent", "Speed",
+        "CriticalHitChancePercent", "CriticalHitDamagePercent", "EffectivenessPercent", "EffectResistancePercent"
+    ],
+    Armor: [
+        "DefensePercent", "Health", "HealthPercent", "Speed",
+        "CriticalHitChancePercent", "CriticalHitDamagePercent", "EffectivenessPercent", "EffectResistancePercent"
+    ],
+    Necklace: [
+        "Attack", "AttackPercent", "Defense", "DefensePercent", "Health", "HealthPercent", "Speed",
+        "CriticalHitChancePercent", "CriticalHitDamagePercent", "EffectivenessPercent", "EffectResistancePercent"
+    ],
+    Ring: [
+        "Attack", "AttackPercent", "Defense", "DefensePercent", "Health", "HealthPercent", "Speed",
+        "CriticalHitChancePercent", "CriticalHitDamagePercent", "EffectivenessPercent", "EffectResistancePercent"
+    ],
+    Boots: [
+        "Attack", "AttackPercent", "Defense", "DefensePercent", "Health", "HealthPercent", "Speed",
+        "CriticalHitChancePercent", "CriticalHitDamagePercent", "EffectivenessPercent", "EffectResistancePercent"
+    ]
+};
+
+function calculateBestBailiConversion(item, currentBaili) {
+    const substats = item.substats || [];
+    let best = {
+        score: currentBaili.score,
+        bailiClass: currentBaili.bailiClass,
+        plan: "No conversion",
+    };
+
+    for (let i = 0; i < substats.length; i++) {
+        const baseSub = substats[i];
+        if (!baseSub) continue;
+
+        const candidates = getConversionCandidates(item, i);
+        for (const replacementStat of candidates) {
+            const convertedValue = getBestConvertibleValue(item, replacementStat, baseSub.rolls || 1);
+            if (convertedValue == null) continue;
+
+            const itemCopy = JSON.parse(JSON.stringify(item));
+            const copySub = itemCopy.substats[i];
+            const originalType = copySub.type;
+            const originalAugValue = copySub.value || 0;
+            const originalReforgedValue = copySub.reforgedValue || copySub.value || 0;
+
+            copySub.type = replacementStat;
+            copySub.value = convertedValue;
+            copySub.reforgedValue = convertedValue;
+            copySub.modified = true;
+
+            if (itemCopy.augmentedStats) {
+                itemCopy.augmentedStats[originalType] = Math.max(0, (itemCopy.augmentedStats[originalType] || 0) - originalAugValue);
+                itemCopy.augmentedStats[replacementStat] = (itemCopy.augmentedStats[replacementStat] || 0) + convertedValue;
+            }
+            if (itemCopy.reforgedStats) {
+                itemCopy.reforgedStats[originalType] = Math.max(0, (itemCopy.reforgedStats[originalType] || 0) - originalReforgedValue);
+                itemCopy.reforgedStats[replacementStat] = (itemCopy.reforgedStats[replacementStat] || 0) + convertedValue;
+            }
+
+            const baili = calculateBailiScore(itemCopy);
+            if (baili.score > best.score) {
+                best = {
+                    score: baili.score,
+                    bailiClass: baili.bailiClass,
+                    plan: `${i18next.t(originalType)} -> ${i18next.t(replacementStat)} (${convertedValue})`,
+                };
+            }
+        }
+    }
+    return best;
+}
+
+function getConversionCandidates(item, replaceIndex) {
+    const allCandidates = CONVERTIBLE_STATS_BY_GEAR[item.gear] || [];
+    const existingSubstats = (item.substats || []).map(s => s.type);
+    const replaceStat = item.substats?.[replaceIndex]?.type;
+
+    return allCandidates.filter(stat => {
+        if (stat == item.main.type) return false;
+        if (item.gear == "Weapon" && stat.includes("Defense")) return false;
+        if (item.gear == "Armor" && stat.includes("Attack")) return false;
+        if (stat != replaceStat && existingSubstats.includes(stat)) return false;
+        return true;
+    });
+}
+
+function getBestConvertibleValue(item, statType, rolls) {
+    const reforged = (Reforge.isReforgeable(item) || item.level == 90) ? "reforged" : "unreforged";
+    const modTier = "greater";
+    const rollIndex = Math.max(0, Math.min(5, (rolls || 1) - 1));
+
+    const values = Constants?.modValues?.[reforged]?.[modTier]?.[statType]?.[rollIndex];
+    if (!values || values.length < 2) {
+        return null;
+    }
+    return values[1];
 }
 
 function evaluatePiecewise(score, rules) {
