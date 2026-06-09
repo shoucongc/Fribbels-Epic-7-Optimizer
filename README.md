@@ -413,3 +413,29 @@ _________________
 
 The E7 optimizer is currently in maintenance mode - I'll be keeping the project updated with new units but all new feature development is on pause.
 
+## Releases
+### Local Build Instructions
+
+Run the following commands from the project root.
+
+### Manual build
+
+```powershell
+# Install Yarn the first time only, if it is not already installed
+npm install -g yarn@1.22.22
+
+# Install dependencies the first time, or after package.json changes
+yarn install --ignore-engines
+cd app; yarn install --ignore-engines; cd ..
+
+# Build and package
+$env:NODE_OPTIONS = "--openssl-legacy-provider"
+yarn build
+yarn electron-builder build --win --x64 --publish never
+```
+
+### One-command build
+
+```powershell
+.\scripts\build-local.ps1
+```
