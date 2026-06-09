@@ -28,6 +28,7 @@ const filters = {
     substatFilter: [],
     duplicateFilter: null,
     equippedOrNotFilter: null,
+    storageFilter: null,
     modifyFilter: null,
     bailiFilter: null,
     bailiConvFilter: null,
@@ -354,6 +355,10 @@ const elementsByFilter = {
         "equippedFilter",
         "unequippedFilter",
     ],
+    storageFilter: [
+        "backpackFilter",
+        "storageFilter",
+    ],
     modifyFilter: [
         "modifyAtkFilter",
         "modifyAtkPercentFilter",
@@ -514,6 +519,8 @@ function setupEventListeners() {
 
     setupFilterListener("equippedFilter", "equippedOrNotFilter", "equipped")
     setupFilterListener("unequippedFilter", "equippedOrNotFilter", "unequipped")
+    setupFilterListener("backpackFilter", "storageFilter", "backpack")
+    setupFilterListener("storageFilter", "storageFilter", "storage")
 
     setupClearListener("clearOtherFilter", "duplicateFilter")
 

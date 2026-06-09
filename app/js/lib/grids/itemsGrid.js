@@ -101,6 +101,7 @@ module.exports = {
                 {headerName: i18next.t('Baili Conv Class'), field: 'bailiConvClass', width: 175},
                 {headerName: i18next.t('Baili Conv Plan'), field: 'bailiConvPlan', width: 190},
                 {headerName: i18next.t('Equipped'), field: 'equippedByName', width: 120, cellRenderer: (params) => renderStat(i18next.t(params.value))},
+                {headerName: i18next.t('Location'), field: 'storageLocation', width: 90},
                 // {headerName: i18next.t('Mconf'), field: 'mconfidence', width: 50},
                 // {headerName: i18next.t('Material'), field: 'material', width: 120},
                 {headerName: i18next.t('Locked'), field: 'locked', cellRenderer: (params) => params.value == true ? i18next.t('yes') : i18next.t('')},
@@ -109,6 +110,7 @@ module.exports = {
                 {headerName: i18next.t('Duplicate'), field: 'duplicateId', hide: true},
                 {headerName: 'AllowedMods', field: 'allowedMods', hide: true},
                 {headerName: 'EquippedById', field: 'equippedById', hide: true},
+                {headerName: 'Storage', field: 'storage', hide: true},
             ],
             rowSelection: 'multiple',
             pagination: true,
@@ -204,6 +206,7 @@ module.exports = {
         const substatFilter = filters.substatFilter;
         const duplicateFilter = filters.duplicateFilter;
         const equippedOrNotFilter = filters.equippedOrNotFilter;
+        const storageFilter = filters.storageFilter;
         const modifyFilter = filters.modifyFilter;
         const bailiFilter = filters.bailiFilter;
         const bailiConvFilter = filters.bailiConvFilter;
@@ -433,6 +436,15 @@ module.exports = {
             }
         }
 
+        const storageFilterComponent = itemsGrid.gridOptions.api.getFilterInstance('storage');
+        if (!storageFilter) {
+            storageFilterComponent.setModel(null);
+        } else if (storageFilter == "storage") {
+            storageFilterComponent.setModel({ type: 'equals', filter: true });
+        } else if (storageFilter == "backpack") {
+            storageFilterComponent.setModel({ type: 'equals', filter: false });
+        }
+
         const bailiFilterComponent = itemsGrid.gridOptions.api.getFilterInstance('bailiScore');
         if (!bailiFilter) {
             bailiFilterComponent.setModel(null);
@@ -644,6 +656,8 @@ function applyBailiScoring(items) {
         item.bailiConvScore = Number(conv.score) || 0;
         item.bailiConvClass = conv.bailiClass == "未分类" ? "" : conv.bailiClass;
         item.bailiConvPlan = conv.plan == "No conversion" ? "" : conv.plan;
+        item.storage = !!item.storage;
+        item.storageLocation = item.storage ? i18next.t('Storage') : i18next.t('Backpack');
         return item;
     });
 }
