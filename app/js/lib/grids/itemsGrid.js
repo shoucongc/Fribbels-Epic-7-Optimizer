@@ -94,7 +94,7 @@ module.exports = {
                 {headerName: i18next.t('Def'), field: 'augmentedStats.Defense', cellRenderer: (params) => params.value == 0 ? "" : params.value},
                 {headerName: i18next.t('Eff'), field: 'augmentedStats.EffectivenessPercent', cellRenderer: (params) => params.value == 0 ? "" : params.value},
                 {headerName: i18next.t('Res'), field: 'augmentedStats.EffectResistancePercent', cellRenderer: (params) => params.value == 0 ? "" : params.value},
-                {headerName: i18next.t('Score'), field: 'reforgedWss', width: 50, cellStyle: scoreColumnGradient},
+                {headerName: i18next.t('Score'), field: 'reforgedWss', width: 50, cellStyle: scoreColumnGradient, filter: 'agNumberColumnFilter'},
                 {headerName: i18next.t('Baili Score'), field: 'bailiScore', width: 70, cellStyle: bailiScoreBandColumnStyle, filter: 'agNumberColumnFilter'},
                 {headerName: i18next.t('Baili Class'), field: 'bailiClass', width: 175},
                 {headerName: i18next.t('Baili Conv Score'), field: 'bailiConvScore', width: 95, cellStyle: bailiScoreBandColumnStyle, filter: 'agNumberColumnFilter'},
