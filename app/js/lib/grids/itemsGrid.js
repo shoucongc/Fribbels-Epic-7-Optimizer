@@ -100,7 +100,7 @@ module.exports = {
                 {headerName: i18next.t('sScore'), field: 'supportWss', width: 50, cellStyle: scoreColumnGradient},
                 {headerName: i18next.t('cScore'), field: 'combatWss', width: 50, cellStyle: scoreColumnGradient},
                 {headerName: i18next.t('Baili Score'), field: 'bailiScore', width: 60, cellStyle: scoreColumnGradient, filter: 'agNumberColumnFilter'},
-                {headerName: i18next.t('Baili Class'), field: 'bailiClass', width: 90},
+                {headerName: i18next.t('Baili Class'), field: 'bailiClass', width: 170},
                 {headerName: i18next.t('Equipped'), field: 'equippedByName', width: 120, cellRenderer: (params) => renderStat(i18next.t(params.value))},
                 // {headerName: i18next.t('Mconf'), field: 'mconfidence', width: 50},
                 // {headerName: i18next.t('Material'), field: 'material', width: 120},
@@ -553,6 +553,7 @@ function applyBailiScoring(items) {
 function calculateBailiScore(item) {
     const gearScore = item.reforgedWss || item.wss || 0;
     const stats = item.reforgedStats || item.augmentedStats || {};
+    const speed = stats.Speed || 0;
 
     // Main categories are mutually exclusive; use first match in order.
     let mainScore = 0;
@@ -592,12 +593,12 @@ function calculateBailiScore(item) {
     // One-speed and speed scores are special bonuses and can be stacked.
     let bonusScore = 0;
     const bonusTags = [];
-    if (matchYisu(item)) {
-        bonusScore += yisuScore(gearScore);
+    if (matchYisu(item, speed)) {
+        bonusScore += yisuScore(speed);
         bonusTags.push("一速");
     }
-    if (matchSudu(item, stats)) {
-        bonusScore += suduScore(item, gearScore);
+    if (matchSudu(item, speed)) {
+        bonusScore += suduScore(item, gearScore, speed);
         bonusTags.push("速度");
     }
 
@@ -646,12 +647,12 @@ function matchSet(item, allowedSets) {
     return allowedSets.includes(item.set);
 }
 
-function matchYisu(item) {
-    return isNonBoots(item) && hasSpeedMainOrSub(item) && hasStat(item.reforgedStats || item.augmentedStats || {}, "Speed");
+function matchYisu(item, speed) {
+    return isNonBoots(item) && hasSpeedMainOrSub(item) && speed >= 22;
 }
 
-function yisuScore(score) {
-    return evaluatePiecewise(score, [
+function yisuScore(speed) {
+    return evaluatePiecewise(speed, [
         { when: s => s >= 27, value: s => 20 * s - 490 },
         { when: s => s >= 25, value: s => 10 * s - 225 },
         { when: s => s >= 22, value: s => 5 * s - 105 },
@@ -667,11 +668,11 @@ function hasSpeedMainOrSub(item) {
     return substats.some(s => s.type == "Speed");
 }
 
-function matchSudu(item, stats) {
+function matchSudu(item, speed) {
     if (!isNonBoots(item)) {
         return false;
     }
-    if (!hasStat(stats, "Speed")) {
+    if (speed < 18) {
         return false;
     }
     const speedSet = item.set == "SpeedSet";
@@ -682,7 +683,10 @@ function matchSudu(item, stats) {
     return speedSet || nonSpeedSets.includes(item.set);
 }
 
-function suduScore(item, score) {
+function suduScore(item, score, speed) {
+    if (speed < 18) {
+        return 0;
+    }
     if (item.set == "SpeedSet") {
         return evaluatePiecewise(score, [
             { when: s => s >= 78, value: s => 4 * s - 285 },
