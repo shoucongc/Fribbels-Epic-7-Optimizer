@@ -569,11 +569,11 @@ function bailiScoreBandColumnStyle(params) {
         const value = Number(params.value) || 0;
 
         // Map to old-style gradient stops by filter bands:
-        // 0 -> 0%, 1-3 -> 30%, 5-9 -> 55%, 10+ -> 80%
+        // 0 -> 0%, 1-3 -> 70%, 5-9 -> 75%, 10+ -> 80%
         let percent = 0.0;
         if (value >= 10) percent = 0.8;
-        else if (value >= 5) percent = 0.55;
-        else if (value >= 1) percent = 0.3;
+        else if (value >= 5) percent = 0.75;
+        else if (value >= 1) percent = 0.7;
 
         const color = scoreGradient.gradient.rgbAt(percent);
         return { backgroundColor: color.toHexString() };
