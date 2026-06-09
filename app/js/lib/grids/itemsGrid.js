@@ -559,31 +559,31 @@ function calculateBailiScore(item) {
     let mainScore = 0;
     let bailiClass = "未分类";
     if (matchShuchu(item, stats)) {
-        mainScore = shuchuScore(item, gearScore);
+        mainScore = shuchuScore(item, getEffectiveGearScore(stats, SHUCHU_EFFECTIVE_STATS));
         bailiClass = "输出";
     } else if (matchShuchuBiba(item, stats)) {
-        mainScore = shuchuBibaScore(item, gearScore);
+        mainScore = shuchuBibaScore(item, getEffectiveGearScore(stats, SHUCHU_BIBAO_EFFECTIVE_STATS));
         bailiClass = "输出（必爆）";
     } else if (matchKangtan(item, stats)) {
-        mainScore = kangtanScore(item, gearScore);
+        mainScore = kangtanScore(item, getEffectiveGearScore(stats, KANGTAN_EFFECTIVE_STATS));
         bailiClass = "抗坦";
     } else if (matchChunrou(item, stats)) {
-        mainScore = chunrouScore(item, gearScore);
+        mainScore = chunrouScore(item, getEffectiveGearScore(stats, CHUNROU_EFFECTIVE_STATS));
         bailiClass = "纯肉";
     } else if (matchMingtan(item, stats)) {
-        mainScore = mingtanScore(item, gearScore);
+        mainScore = mingtanScore(item, getEffectiveGearScore(stats, MINGTAN_EFFECTIVE_STATS));
         bailiClass = "命坦";
     } else if (matchShuangxiao(item, stats)) {
-        mainScore = shuangxiaoScore(item, gearScore);
+        mainScore = shuangxiaoScore(item, getEffectiveGearScore(stats, SHUANGXIAO_EFFECTIVE_STATS));
         bailiClass = "双效";
     } else if (matchBanrouXuefang(item, stats)) {
-        mainScore = banrouXuefangScore(item, gearScore);
+        mainScore = banrouXuefangScore(item, getEffectiveGearScore(stats, BANROU_XUEFANG_EFFECTIVE_STATS));
         bailiClass = "半肉（血防）";
     } else if (matchBanrou(item, stats)) {
-        mainScore = banrouScore(item, gearScore);
+        mainScore = banrouScore(item, getEffectiveGearScore(stats, BANROU_EFFECTIVE_STATS));
         bailiClass = "半肉";
     } else if (matchBanrouBaizi(item, stats)) {
-        mainScore = banrouBaiziScore(item, gearScore);
+        mainScore = banrouBaiziScore(item, getEffectiveGearScore(stats, BANROU_BAIZI_EFFECTIVE_STATS));
         bailiClass = "半肉（白字）";
     } else if (gearScore >= 75) {
         mainScore = Math.max(0, (2.0 / 3.0) * (gearScore - 73.5));
@@ -598,7 +598,7 @@ function calculateBailiScore(item) {
         bonusTags.push("一速");
     }
     if (matchSudu(item, speed)) {
-        bonusScore += suduScore(item, gearScore, speed);
+        bonusScore += suduScore(item, getEffectiveGearScore(stats, SUDU_EFFECTIVE_STATS), speed);
         bonusTags.push("速度");
     }
 
@@ -619,6 +619,41 @@ function evaluatePiecewise(score, rules) {
         }
     }
     return 0;
+}
+
+const WSS_WEIGHTS = {
+    AttackPercent: 1,
+    DefensePercent: 1,
+    HealthPercent: 1,
+    EffectResistancePercent: 1,
+    EffectivenessPercent: 1,
+    Speed: (8.0 / 4.0),
+    CriticalHitDamagePercent: (8.0 / 7.0),
+    CriticalHitChancePercent: (8.0 / 5.0),
+    Attack: (3.46 / 39),
+    Defense: (4.99 / 31),
+    Health: (3.09 / 174),
+};
+
+const SHUCHU_EFFECTIVE_STATS = ["AttackPercent", "Attack", "CriticalHitChancePercent", "CriticalHitDamagePercent", "Speed"];
+const SHUCHU_BIBAO_EFFECTIVE_STATS = ["AttackPercent", "Attack", "CriticalHitDamagePercent", "Speed"];
+const KANGTAN_EFFECTIVE_STATS = ["HealthPercent", "Health", "DefensePercent", "Defense", "Speed", "EffectResistancePercent"];
+const CHUNROU_EFFECTIVE_STATS = ["HealthPercent", "Health", "DefensePercent", "Defense", "Speed"];
+const MINGTAN_EFFECTIVE_STATS = ["HealthPercent", "Health", "DefensePercent", "Defense", "Speed", "EffectivenessPercent"];
+const SHUANGXIAO_EFFECTIVE_STATS = ["Speed", "HealthPercent", "DefensePercent", "Defense", "EffectResistancePercent", "EffectivenessPercent", "AttackPercent"];
+const BANROU_XUEFANG_EFFECTIVE_STATS = ["CriticalHitChancePercent", "CriticalHitDamagePercent", "Speed", "HealthPercent", "DefensePercent", "Defense"];
+const BANROU_EFFECTIVE_STATS = ["AttackPercent", "CriticalHitChancePercent", "CriticalHitDamagePercent", "Speed", "HealthPercent", "DefensePercent", "Defense"];
+const BANROU_BAIZI_EFFECTIVE_STATS = ["AttackPercent", "Attack", "Speed", "HealthPercent", "Health", "DefensePercent", "Defense"];
+const SUDU_EFFECTIVE_STATS = ["Speed"];
+
+function getEffectiveGearScore(stats, effectiveStats) {
+    let score = 0;
+    for (const stat of effectiveStats) {
+        const value = stats[stat] || 0;
+        const weight = WSS_WEIGHTS[stat] || 0;
+        score += value * weight;
+    }
+    return Utils.round10ths(score);
 }
 
 function hasAnyStat(stats, names) {
@@ -705,13 +740,12 @@ function suduScore(item, score, speed) {
 
 function matchShuchu(item, stats) {
     const sets = ["SpeedSet", "DestructionSet", "CriticalSet", "PenetrationSet", "TorrentSet", "CounterSet", "LifestealSet", "ImmunitySet", "RiposteSet", "WarfareSet"];
-    const goodStats = ["AttackPercent", "Attack", "CriticalHitChancePercent", "CriticalHitDamagePercent", "Speed"];
     const mainByGear = {
         Necklace: ["CriticalHitChancePercent", "CriticalHitDamagePercent"],
         Ring: ["AttackPercent"],
         Boots: ["Speed", "AttackPercent"],
     };
-    return matchSet(item, sets) && hasAnyStat(stats, goodStats) && matchMain(item, mainByGear[item.gear] || []);
+    return matchSet(item, sets) && hasAnyStat(stats, SHUCHU_EFFECTIVE_STATS) && matchMain(item, mainByGear[item.gear] || []);
 }
 
 function shuchuScore(item, score) {
@@ -756,13 +790,12 @@ function shuchuScore(item, score) {
 
 function matchShuchuBiba(item, stats) {
     const sets = ["SpeedSet", "DestructionSet", "PenetrationSet", "TorrentSet", "ImmunitySet", "RiposteSet"];
-    const goodStats = ["AttackPercent", "Attack", "CriticalHitDamagePercent", "Speed"];
     const mainByGear = {
         Necklace: ["CriticalHitDamagePercent"],
         Ring: ["AttackPercent"],
         Boots: ["Speed", "AttackPercent"],
     };
-    return matchSet(item, sets) && hasAnyStat(stats, goodStats) && item.gear != "Armor" && matchMain(item, mainByGear[item.gear] || []);
+    return matchSet(item, sets) && hasAnyStat(stats, SHUCHU_BIBAO_EFFECTIVE_STATS) && item.gear != "Armor" && matchMain(item, mainByGear[item.gear] || []);
 }
 
 function shuchuBibaScore(item, score) {
@@ -798,13 +831,12 @@ function shuchuBibaScore(item, score) {
 
 function matchKangtan(item, stats) {
     const sets = ["SpeedSet", "HealthSet", "DefenseSet", "ResistSet", "ProtectionSet", "CounterSet", "ImmunitySet", "ReversalSet", "WarfareSet", "PursuitSet"];
-    const goodStats = ["HealthPercent", "Health", "DefensePercent", "Defense", "Speed", "EffectResistancePercent"];
     const mainByGear = {
         Necklace: ["HealthPercent", "DefensePercent"],
         Ring: ["HealthPercent", "DefensePercent", "EffectResistancePercent"],
         Boots: ["HealthPercent", "DefensePercent", "Speed"],
     };
-    return matchSet(item, sets) && hasAnyStat(stats, goodStats) && matchMain(item, mainByGear[item.gear] || []);
+    return matchSet(item, sets) && hasAnyStat(stats, KANGTAN_EFFECTIVE_STATS) && matchMain(item, mainByGear[item.gear] || []);
 }
 
 function kangtanScore(item, score) {
@@ -837,13 +869,12 @@ function kangtanScore(item, score) {
 
 function matchChunrou(item, stats) {
     const sets = ["SpeedSet", "HealthSet", "DefenseSet", "ProtectionSet", "ImmunitySet", "ReversalSet", "WarfareSet"];
-    const goodStats = ["HealthPercent", "Health", "DefensePercent", "Defense", "Speed"];
     const mainByGear = {
         Necklace: ["HealthPercent"],
         Ring: ["HealthPercent"],
         Boots: ["HealthPercent", "Speed"],
     };
-    return matchSet(item, sets) && hasAnyStat(stats, goodStats) && matchMain(item, mainByGear[item.gear] || []);
+    return matchSet(item, sets) && hasAnyStat(stats, CHUNROU_EFFECTIVE_STATS) && matchMain(item, mainByGear[item.gear] || []);
 }
 
 function chunrouScore(item, score) {
@@ -876,13 +907,12 @@ function chunrouScore(item, score) {
 
 function matchMingtan(item, stats) {
     const sets = ["SpeedSet", "HealthSet", "DefenseSet", "HitSet", "ImmunitySet", "PursuitSet"];
-    const goodStats = ["HealthPercent", "Health", "DefensePercent", "Defense", "Speed", "EffectivenessPercent"];
     const mainByGear = {
         Necklace: ["HealthPercent", "DefensePercent"],
         Ring: ["HealthPercent", "DefensePercent", "EffectivenessPercent"],
         Boots: ["Speed"],
     };
-    return matchSet(item, sets) && hasAnyStat(stats, goodStats) && matchMain(item, mainByGear[item.gear] || []);
+    return matchSet(item, sets) && hasAnyStat(stats, MINGTAN_EFFECTIVE_STATS) && matchMain(item, mainByGear[item.gear] || []);
 }
 
 function mingtanScore(item, score) {
@@ -891,7 +921,6 @@ function mingtanScore(item, score) {
 
 function matchShuangxiao(item, stats) {
     const sets = ["SpeedSet", "HealthSet", "DefenseSet", "HitSet", "ResistSet", "CounterSet", "ImmunitySet"];
-    const goodStats = ["Speed", "HealthPercent", "DefensePercent", "Defense", "EffectResistancePercent", "EffectivenessPercent", "AttackPercent"];
     const hasEffOrRes = hasStat(stats, "EffectivenessPercent") || hasStat(stats, "EffectResistancePercent");
     const atkWithBoth = hasStat(stats, "AttackPercent") && hasEffOrRes;
     const mainByGear = {
@@ -899,7 +928,7 @@ function matchShuangxiao(item, stats) {
         Ring: ["HealthPercent", "DefensePercent", "AttackPercent", "EffectResistancePercent", "EffectivenessPercent"],
         Boots: ["Speed"],
     };
-    return matchSet(item, sets) && hasAnyStat(stats, goodStats) && hasEffOrRes && !atkWithBoth && matchMain(item, mainByGear[item.gear] || []);
+    return matchSet(item, sets) && hasAnyStat(stats, SHUANGXIAO_EFFECTIVE_STATS) && hasEffOrRes && !atkWithBoth && matchMain(item, mainByGear[item.gear] || []);
 }
 
 function shuangxiaoScore(_item, score) {
@@ -913,13 +942,12 @@ function shuangxiaoScore(_item, score) {
 
 function matchBanrouXuefang(item, stats) {
     const sets = ["HealthSet", "DefenseSet", "SpeedSet", "DestructionSet", "CounterSet", "InjurySet", "ImmunitySet", "PenetrationSet", "PursuitSet"];
-    const goodStats = ["CriticalHitChancePercent", "CriticalHitDamagePercent", "Speed", "HealthPercent", "DefensePercent", "Defense"];
     const mainByGear = {
         Necklace: ["CriticalHitChancePercent", "CriticalHitDamagePercent"],
         Ring: ["HealthPercent", "DefensePercent"],
         Boots: ["Speed"],
     };
-    return matchSet(item, sets) && hasAnyStat(stats, goodStats) && matchMain(item, mainByGear[item.gear] || []);
+    return matchSet(item, sets) && hasAnyStat(stats, BANROU_XUEFANG_EFFECTIVE_STATS) && matchMain(item, mainByGear[item.gear] || []);
 }
 
 function banrouXuefangScore(item, score) {
@@ -952,13 +980,12 @@ function banrouXuefangScore(item, score) {
 
 function matchBanrou(item, stats) {
     const sets = ["HealthSet", "DefenseSet", "SpeedSet", "CriticalSet", "DestructionSet", "CounterSet", "InjurySet", "LifestealSet", "ImmunitySet", "PenetrationSet", "RiposteSet"];
-    const goodStats = ["AttackPercent", "CriticalHitChancePercent", "CriticalHitDamagePercent", "Speed", "HealthPercent", "DefensePercent", "Defense"];
     const mainByGear = {
         Necklace: ["CriticalHitChancePercent", "CriticalHitDamagePercent"],
         Ring: ["HealthPercent", "DefensePercent", "AttackPercent"],
         Boots: ["Speed"],
     };
-    return matchSet(item, sets) && hasAnyStat(stats, goodStats) && matchMain(item, mainByGear[item.gear] || []);
+    return matchSet(item, sets) && hasAnyStat(stats, BANROU_EFFECTIVE_STATS) && matchMain(item, mainByGear[item.gear] || []);
 }
 
 function banrouScore(_item, score) {
@@ -972,13 +999,12 @@ function banrouScore(_item, score) {
 
 function matchBanrouBaizi(item, stats) {
     const sets = ["HealthSet", "DefenseSet", "SpeedSet", "CounterSet", "ImmunitySet", "WarfareSet", "PursuitSet"];
-    const goodStats = ["AttackPercent", "Attack", "Speed", "HealthPercent", "Health", "DefensePercent", "Defense"];
     const mainByGear = {
         Necklace: ["DefensePercent", "HealthPercent", "AttackPercent"],
         Ring: ["HealthPercent", "DefensePercent", "AttackPercent"],
         Boots: ["Speed"],
     };
-    return matchSet(item, sets) && hasAnyStat(stats, goodStats) && matchMain(item, mainByGear[item.gear] || []);
+    return matchSet(item, sets) && hasAnyStat(stats, BANROU_BAIZI_EFFECTIVE_STATS) && matchMain(item, mainByGear[item.gear] || []);
 }
 
 function banrouBaiziScore(item, score) {

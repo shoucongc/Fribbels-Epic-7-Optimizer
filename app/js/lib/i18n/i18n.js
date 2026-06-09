@@ -11,6 +11,7 @@ module.exports = {
 
         window.i18next.use(window.i18nextHttpBackend).use(window.i18nextBrowserLanguageDetector).init({
             debug: false,
+            lng: 'zh',
             preload: ['en', 'zh', 'zh-TW', 'fr', 'ko', 'ja', 'ru', 'dev'],
             detection: {
                 // order and from where user language should be detected
@@ -33,7 +34,7 @@ module.exports = {
             translateAttributes: ['placeholder', 'title', 'alt', 'value#input.type=button', 'value#input.type=submit', 'data-content'],
             saveMissing: true,
             saveMissingTo: "current",
-            fallbackLng: false,
+            fallbackLng: 'zh',
             keySeparator: false,
             nsSeparator: false,
             pluralSeparator: false,
