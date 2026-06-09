@@ -83,7 +83,6 @@ module.exports = {
                 {headerName: i18next.t('Level'), field: 'level', filter: 'agNumberColumnFilter'},
                 {headerName: i18next.t('Enhance'), field: 'enhance', width: 60, filter: 'agNumberColumnFilter'},
                 {headerName: i18next.t('Main'), field: 'main.type', width: 100, cellRenderer: (params) => renderStat(i18next.t(params.value))},
-                {headerName: i18next.t('Value'), field: 'main.value', width: 60},
                 {headerName: i18next.t('Atk%'), field: 'augmentedStats.AttackPercent', cellRenderer: (params) => params.value == 0 ? "" : params.value},
                 {headerName: i18next.t('Atk'), field: 'augmentedStats.Attack', cellRenderer: (params) => params.value == 0 ? "" : params.value},
                 {headerName: i18next.t('Spd'), field: 'augmentedStats.Speed', cellRenderer: (params) => params.value == 0 ? "" : params.value},
@@ -95,12 +94,12 @@ module.exports = {
                 {headerName: i18next.t('Def'), field: 'augmentedStats.Defense', cellRenderer: (params) => params.value == 0 ? "" : params.value},
                 {headerName: i18next.t('Eff'), field: 'augmentedStats.EffectivenessPercent', cellRenderer: (params) => params.value == 0 ? "" : params.value},
                 {headerName: i18next.t('Res'), field: 'augmentedStats.EffectResistancePercent', cellRenderer: (params) => params.value == 0 ? "" : params.value},
-                {headerName: i18next.t('Score'), field: 'reforgedWss', width: 50, cellStyle: gearScoreBandColumnStyle},
-                {headerName: i18next.t('Baili Score'), field: 'bailiScore', width: 75, cellStyle: bailiScoreBandColumnStyle, filter: 'agNumberColumnFilter'},
-                {headerName: i18next.t('Baili Class'), field: 'bailiClass', width: 200},
-                {headerName: i18next.t('Baili Conv Score'), field: 'bailiConvScore', width: 115, cellStyle: bailiScoreBandColumnStyle, filter: 'agNumberColumnFilter'},
-                {headerName: i18next.t('Baili Conv Class'), field: 'bailiConvClass', width: 200},
-                {headerName: i18next.t('Baili Conv Plan'), field: 'bailiConvPlan', width: 220},
+                {headerName: i18next.t('Score'), field: 'reforgedWss', width: 50, cellStyle: scoreColumnGradient},
+                {headerName: i18next.t('Baili Score'), field: 'bailiScore', width: 70, cellStyle: bailiScoreBandColumnStyle, filter: 'agNumberColumnFilter'},
+                {headerName: i18next.t('Baili Class'), field: 'bailiClass', width: 175},
+                {headerName: i18next.t('Baili Conv Score'), field: 'bailiConvScore', width: 95, cellStyle: bailiScoreBandColumnStyle, filter: 'agNumberColumnFilter'},
+                {headerName: i18next.t('Baili Conv Class'), field: 'bailiConvClass', width: 175},
+                {headerName: i18next.t('Baili Conv Plan'), field: 'bailiConvPlan', width: 190},
                 {headerName: i18next.t('Equipped'), field: 'equippedByName', width: 120, cellRenderer: (params) => renderStat(i18next.t(params.value))},
                 // {headerName: i18next.t('Mconf'), field: 'mconfidence', width: 50},
                 // {headerName: i18next.t('Material'), field: 'material', width: 120},
@@ -569,11 +568,13 @@ function bailiScoreBandColumnStyle(params) {
         if (!params || params.value == undefined) return;
         const value = Number(params.value) || 0;
 
-        // Baili ranges: 0, 1-3, 5-9, 10+
-        if (value >= 10) return { backgroundColor: '#58D9F9' };
-        if (value >= 5) return { backgroundColor: '#7CFFB2' };
-        if (value >= 1) return { backgroundColor: '#FDDD60' };
-        return { backgroundColor: '#FF6E76' };
+        // Reuse old continuous score gradient style, but normalize to Baili range.
+        let percent = value / 35;
+        percent = Math.min(1, percent);
+        percent = Math.max(0, percent);
+
+        const color = scoreGradient.gradient.rgbAt(percent);
+        return { backgroundColor: color.toHexString() };
     } catch (e) { console.error(e) }
 }
 
@@ -583,10 +584,13 @@ function gearScoreBandColumnStyle(params) {
         const value = Number(params.value) || 0;
 
         // Gear score ranges: <70, 70-72, 73-74, 75+
-        if (value >= 75) return { backgroundColor: '#58D9F9' };
-        if (value >= 73) return { backgroundColor: '#7CFFB2' };
-        if (value >= 70) return { backgroundColor: '#FDDD60' };
-        return { backgroundColor: '#FF6E76' };
+        let percent = 0.1;
+        if (value >= 75) percent = 0.95;
+        else if (value >= 73) percent = 0.75;
+        else if (value >= 70) percent = 0.45;
+
+        const color = scoreGradient.gradient.rgbAt(percent);
+        return { backgroundColor: color.toHexString() };
     } catch (e) { console.error(e) }
 }
 
