@@ -701,9 +701,12 @@ function calculateBailiScore(item) {
     }
 
     const score = Math.max(0, Utils.round10ths(mainScore + bonusScore));
-    const classText = bonusTags.length > 0
-        ? `${bailiClass} + ${bonusTags.join(" + ")}`
-        : bailiClass;
+    let classText = bailiClass;
+    if (bonusTags.length > 0) {
+        classText = bailiClass == "未分类"
+            ? bonusTags.join(" + ")
+            : `${bailiClass} + ${bonusTags.join(" + ")}`;
+    }
     return {
         score: score,
         bailiClass: classText
@@ -746,7 +749,16 @@ function calculateBestBailiConversion(item, currentBaili) {
         plan: "No conversion",
     };
 
-    for (let i = 0; i < substats.length; i++) {
+    // If gear already has converted substat(s), only re-evaluate those slot(s).
+    // Otherwise, evaluate all substats as potential conversion targets.
+    const modifiedIndexes = substats
+        .map((sub, index) => sub?.modified ? index : -1)
+        .filter(index => index >= 0);
+    const indexesToEvaluate = modifiedIndexes.length > 0
+        ? modifiedIndexes
+        : substats.map((_sub, index) => index);
+
+    for (const i of indexesToEvaluate) {
         const baseSub = substats[i];
         if (!baseSub) continue;
 
