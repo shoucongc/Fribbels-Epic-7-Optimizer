@@ -99,8 +99,8 @@ function rateBaseScore(stats, baseStats) {
     const hpScore = (stats.HealthPercent  + (stats.Health / baseStats.hp * 100));
     const defScore = (stats.DefensePercent + (stats.Defense / baseStats.def * 100));
     const spdScore = (stats.Speed) * 2;
-    const crScore = (stats.CriticalHitChancePercent) * 8/5;
-    const cdScore = (stats.CriticalHitDamagePercent) * 8/7;
+    const crScore = (stats.CriticalHitChancePercent) * 1.5;
+    const cdScore = (stats.CriticalHitDamagePercent) * 1.125;
     const effScore = (stats.EffectivenessPercent);
     const resScore = (stats.EffectResistancePercent);
     const score = atkScore + hpScore + defScore + spdScore + crScore + cdScore + effScore + resScore;

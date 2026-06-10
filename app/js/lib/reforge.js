@@ -892,8 +892,8 @@ const substatWeights = {
     "Attack": (3.46 / 39),
     "Health": (3.09 / 174),
     "Defense": (4.99 / 31),
-    "CriticalHitDamagePercent": (8/7),
-    "CriticalHitChancePercent": (8/5),
+    "CriticalHitDamagePercent": 1.125,
+    "CriticalHitChancePercent": 1.5,
     "Speed": (8/4),
 }
 

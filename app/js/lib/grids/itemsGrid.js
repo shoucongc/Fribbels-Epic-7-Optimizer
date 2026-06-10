@@ -663,8 +663,8 @@ function applyBailiScoring(items) {
 }
 
 function calculateBailiScore(item) {
-    const gearScore = item.reforgedWss || item.wss || 0;
     const stats = item.reforgedStats || item.augmentedStats || {};
+    const gearScore = getEffectiveGearScore(stats, ALL_WSS_STATS);
     const speed = stats.Speed || 0;
 
     // Evaluate all non-speed categories, then choose the highest one.
@@ -708,7 +708,7 @@ function calculateBailiScore(item) {
         return a.subPriority - b.subPriority;
     })[0];
     const mainScore = bestMain ? bestMain.score : 0;
-    const bailiClass = bestMain ? bestMain.bailiClass : "未分类";
+    const bailiClass = (bestMain && bestMain.score > 0) ? bestMain.bailiClass : "未分类";
 
     // One-speed and speed scores are special bonuses and can be stacked.
     let bonusScore = 0;
@@ -922,12 +922,13 @@ const WSS_WEIGHTS = {
     EffectResistancePercent: 1,
     EffectivenessPercent: 1,
     Speed: (8.0 / 4.0),
-    CriticalHitDamagePercent: (8.0 / 7.0),
-    CriticalHitChancePercent: (8.0 / 5.0),
+    CriticalHitDamagePercent: 1.125,
+    CriticalHitChancePercent: 1.5,
     Attack: (3.46 / 39),
     Defense: (4.99 / 31),
     Health: (3.09 / 174),
 };
+const ALL_WSS_STATS = Object.keys(WSS_WEIGHTS);
 
 // Baili v5 rule interpretation notes (Chinese rule text -> internal enums):
 // - 效果命中 == 效命 == 命中 -> EffectivenessPercent

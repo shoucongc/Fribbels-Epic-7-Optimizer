@@ -76,8 +76,8 @@ public class ItemDb {
                         stats.getEffectResistance() +
                         stats.getEffectiveness() +
                         stats.getSpeed() * (8.0/4.0) +
-                        stats.getCritDamage() * (8.0/7.0) +
-                        stats.getCritRate() * (8.0/5.0) +
+                        stats.getCritDamage() * 1.125 +
+                        stats.getCritRate() * 1.5 +
                         stats.getAttack() * atkValue +
                         stats.getDefense() * defValue +
                         stats.getHealth() * hpValue;
@@ -89,8 +89,8 @@ public class ItemDb {
                         reforgedStats.getEffectResistance() +
                         reforgedStats.getEffectiveness() +
                         reforgedStats.getSpeed() * (8.0/4.0) +
-                        reforgedStats.getCritDamage() * (8.0/7.0) +
-                        reforgedStats.getCritRate() * (8.0/5.0) +
+                        reforgedStats.getCritDamage() * 1.125 +
+                        reforgedStats.getCritRate() * 1.5 +
                         reforgedStats.getAttack() * atkValue +
                         reforgedStats.getDefense() * defValue +
                         reforgedStats.getHealth() * hpValue;
@@ -98,8 +98,8 @@ public class ItemDb {
         double dpsWssValue =
                 reforgedStats.getAttackPercent() +
                         reforgedStats.getSpeed() * (8.0/4.0) +
-                        reforgedStats.getCritDamage() * (8.0/7.0) +
-                        reforgedStats.getCritRate() * (8.0/5.0) +
+                        reforgedStats.getCritDamage() * 1.125 +
+                        reforgedStats.getCritRate() * 1.5 +
                         reforgedStats.getAttack() * atkValue;
 
         double supportWssValue =
@@ -115,8 +115,8 @@ public class ItemDb {
                         reforgedStats.getDefensePercent() +
                         reforgedStats.getHealthPercent() +
                         reforgedStats.getSpeed() * (8.0/4.0) +
-                        reforgedStats.getCritDamage() * (8.0/7.0) +
-                        reforgedStats.getCritRate() * (8.0/5.0) +
+                        reforgedStats.getCritDamage() * 1.125 +
+                        reforgedStats.getCritRate() * 1.5 +
                         reforgedStats.getAttack() * atkValue +
                         reforgedStats.getDefense() * defValue +
                         reforgedStats.getHealth() * hpValue;
