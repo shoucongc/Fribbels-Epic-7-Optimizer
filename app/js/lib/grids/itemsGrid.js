@@ -667,40 +667,48 @@ function calculateBailiScore(item) {
     const stats = item.reforgedStats || item.augmentedStats || {};
     const speed = stats.Speed || 0;
 
-    // Main categories are mutually exclusive; use first match in order.
-    let mainScore = 0;
-    let bailiClass = "未分类";
+    // Evaluate all non-speed categories, then choose the highest one.
+    const mainCandidates = [];
+    // Tie-breaker when main category scores are equal:
+    // 输出 > 坦克 > 双效 > 半肉 > 其他
+    // Lower groupPriority/subPriority means higher priority.
+    const pushMainCandidate = (score, bailiClass, groupPriority, subPriority = 0) => {
+        mainCandidates.push({ score, bailiClass, groupPriority, subPriority });
+    };
     if (matchShuchu(item, stats)) {
-        mainScore = shuchuScore(item, getEffectiveGearScore(stats, SHUCHU_EFFECTIVE_STATS));
-        bailiClass = "输出";
-    } else if (matchShuchuBiba(item, stats)) {
-        mainScore = shuchuBibaScore(item, getEffectiveGearScore(stats, SHUCHU_BIBAO_EFFECTIVE_STATS));
-        bailiClass = "输出（必爆）";
-    } else if (matchKangtan(item, stats)) {
-        mainScore = kangtanScore(item, getEffectiveGearScore(stats, KANGTAN_EFFECTIVE_STATS));
-        bailiClass = "抗坦";
-    } else if (matchChunrou(item, stats)) {
-        mainScore = chunrouScore(item, getEffectiveGearScore(stats, CHUNROU_EFFECTIVE_STATS));
-        bailiClass = "纯肉";
-    } else if (matchMingtan(item, stats)) {
-        mainScore = mingtanScore(item, getEffectiveGearScore(stats, MINGTAN_EFFECTIVE_STATS));
-        bailiClass = "命坦";
-    } else if (matchShuangxiao(item, stats)) {
-        mainScore = shuangxiaoScore(item, getEffectiveGearScore(stats, SHUANGXIAO_EFFECTIVE_STATS));
-        bailiClass = "双效";
-    } else if (matchBanrouXuefang(item, stats)) {
-        mainScore = banrouXuefangScore(item, getEffectiveGearScore(stats, BANROU_XUEFANG_EFFECTIVE_STATS));
-        bailiClass = "半肉（血防）";
-    } else if (matchBanrou(item, stats)) {
-        mainScore = banrouScore(item, getEffectiveGearScore(stats, BANROU_EFFECTIVE_STATS));
-        bailiClass = "半肉";
-    } else if (matchBanrouBaizi(item, stats)) {
-        mainScore = banrouBaiziScore(item, getEffectiveGearScore(stats, BANROU_BAIZI_EFFECTIVE_STATS));
-        bailiClass = "半肉（白字）";
-    } else if (gearScore >= 75) {
-        mainScore = Math.max(0, (2.0 / 3.0) * (gearScore - 73.5));
-        bailiClass = "未来可期";
+        pushMainCandidate(shuchuScore(item, getEffectiveGearScore(stats, SHUCHU_EFFECTIVE_STATS)), "输出", 0, 0);
     }
+    if (matchShuchuBiba(item, stats)) {
+        pushMainCandidate(shuchuBibaScore(item, getEffectiveGearScore(stats, SHUCHU_BIBAO_EFFECTIVE_STATS)), "输出（必爆）", 0, 1);
+    }
+    if (matchKangtan(item, stats)) {
+        pushMainCandidate(kangtanScore(item, getEffectiveGearScore(stats, KANGTAN_EFFECTIVE_STATS)), "抗坦", 1, 0);
+    }
+    if (matchChunrou(item, stats)) {
+        pushMainCandidate(chunrouScore(item, getEffectiveGearScore(stats, CHUNROU_EFFECTIVE_STATS)), "纯肉", 1, 1);
+    }
+    if (matchMingtan(item, stats)) {
+        pushMainCandidate(mingtanScore(item, getEffectiveGearScore(stats, MINGTAN_EFFECTIVE_STATS)), "命坦", 1, 2);
+    }
+    if (matchShuangxiao(item, stats)) {
+        pushMainCandidate(shuangxiaoScore(item, getEffectiveGearScore(stats, SHUANGXIAO_EFFECTIVE_STATS)), "双效", 2, 0);
+    }
+    if (matchBanrouXuefang(item, stats)) {
+        pushMainCandidate(banrouXuefangScore(item, getEffectiveGearScore(stats, BANROU_XUEFANG_EFFECTIVE_STATS)), "半肉（血防）", 3, 0);
+    }
+    if (matchBanrou(item, stats)) {
+        pushMainCandidate(banrouScore(item, getEffectiveGearScore(stats, BANROU_EFFECTIVE_STATS)), "半肉", 3, 1);
+    }
+    if (matchBanrouBaizi(item, stats)) {
+        pushMainCandidate(banrouBaiziScore(item, getEffectiveGearScore(stats, BANROU_BAIZI_EFFECTIVE_STATS)), "半肉（白字）", 3, 2);
+    }
+    const bestMain = mainCandidates.sort((a, b) => {
+        if (b.score != a.score) return b.score - a.score;
+        if (a.groupPriority != b.groupPriority) return a.groupPriority - b.groupPriority;
+        return a.subPriority - b.subPriority;
+    })[0];
+    const mainScore = bestMain ? bestMain.score : 0;
+    const bailiClass = bestMain ? bestMain.bailiClass : "未分类";
 
     // One-speed and speed scores are special bonuses and can be stacked.
     let bonusScore = 0;
@@ -709,9 +717,13 @@ function calculateBailiScore(item) {
         bonusScore += yisuScore(speed);
         bonusTags.push("一速");
     }
-    if (matchSudu(item, speed)) {
-        bonusScore += suduScore(item, getEffectiveGearScore(stats, SUDU_EFFECTIVE_STATS), speed);
-        bonusTags.push("速度");
+    // 速度类别不能独立成立，必须先有一个主类别分数 > 0
+    if (mainScore > 0 && matchSudu(item, speed)) {
+        const speedBonus = suduScore(item, gearScore, speed);
+        bonusScore += speedBonus;
+        if (speedBonus > 0) {
+            bonusTags.push("速度");
+        }
     }
 
     const score = Math.max(0, Utils.round10ths(mainScore + bonusScore));
@@ -778,7 +790,7 @@ function calculateBestBailiConversion(item, currentBaili) {
 
         const candidates = getConversionCandidates(item, i);
         for (const replacementStat of candidates) {
-            const convertedValue = getBestConvertibleValue(item, replacementStat, baseSub.rolls || 1);
+            const convertedValue = getBestConvertibleValue(item, baseSub, replacementStat);
             if (convertedValue == null) continue;
 
             const itemCopy = JSON.parse(JSON.stringify(item));
@@ -828,16 +840,70 @@ function getConversionCandidates(item, replaceIndex) {
     });
 }
 
-function getBestConvertibleValue(item, statType, rolls) {
-    const reforged = (Reforge.isReforgeable(item) || item.level == 90) ? "reforged" : "unreforged";
+function getBestConvertibleValue(item, baseSub, targetStatType) {
+    const reforged = "reforged";
     const modTier = "greater";
-    const rollIndex = Math.max(0, Math.min(5, (rolls || 1) - 1));
 
-    const values = Constants?.modValues?.[reforged]?.[modTier]?.[statType]?.[rollIndex];
-    if (!values || values.length < 2) {
+    const allValues = Constants?.modValues?.[reforged]?.[modTier]?.[targetStatType];
+    if (!allValues || allValues.length == 0) {
         return null;
     }
-    return values[1];
+
+    const estimatedRolls = estimateSubstatRolls(reforged, modTier, baseSub);
+    if (!Number.isFinite(estimatedRolls)) {
+        return null;
+    }
+    const rollIndex = Math.max(0, Math.min(allValues.length - 1, estimatedRolls));
+    const valueRange = allValues[rollIndex];
+    if (!valueRange || valueRange.length < 2) {
+        return null;
+    }
+
+    // Max potential under the same roll-count tier.
+    return valueRange[1];
+}
+
+function estimateSubstatRolls(reforged, modTier, baseSub) {
+    if (!baseSub) return null;
+    if (Number.isFinite(baseSub.rolls)) {
+        // Support both conventions:
+        // - 0-based rolls: base line is 0
+        // - 1-based rolls: base line is 1
+        // If callers pass 0, keep it as base tier; otherwise map 1..6 -> 0..5.
+        const rollValue = Number(baseSub.rolls);
+        if (rollValue <= 0) return 0;
+        return Math.max(0, Math.min(5, rollValue - 1));
+    }
+    const sourceType = baseSub.type;
+    const sourceValue = Number(baseSub.value) || 0;
+    const sourceRanges = Constants?.modValues?.[reforged]?.[modTier]?.[sourceType];
+    if (!sourceRanges || sourceRanges.length == 0) {
+        return null;
+    }
+
+    // Infer roll-count from current source stat value.
+    for (let i = 0; i < sourceRanges.length; i++) {
+        const range = sourceRanges[i];
+        if (!range || range.length < 2) continue;
+        if (sourceValue >= range[0] && sourceValue <= range[1]) {
+            return i;
+        }
+    }
+
+    // Fallback: pick closest roll tier by range midpoint.
+    let bestRolls = 0;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < sourceRanges.length; i++) {
+        const range = sourceRanges[i];
+        if (!range || range.length < 2) continue;
+        const mid = (range[0] + range[1]) / 2;
+        const dist = Math.abs(sourceValue - mid);
+        if (dist < bestDistance) {
+            bestDistance = dist;
+            bestRolls = i;
+        }
+    }
+    return bestRolls;
 }
 
 function evaluatePiecewise(score, rules) {
@@ -882,8 +948,6 @@ const SHUANGXIAO_EFFECTIVE_STATS = ["Speed", "HealthPercent", "DefensePercent", 
 const BANROU_XUEFANG_EFFECTIVE_STATS = ["CriticalHitChancePercent", "CriticalHitDamagePercent", "Speed", "HealthPercent", "DefensePercent", "Defense"];
 const BANROU_EFFECTIVE_STATS = ["AttackPercent", "CriticalHitChancePercent", "CriticalHitDamagePercent", "Speed", "HealthPercent", "DefensePercent", "Defense"];
 const BANROU_BAIZI_EFFECTIVE_STATS = ["AttackPercent", "Attack", "Speed", "HealthPercent", "Health", "DefensePercent", "Defense"];
-const SUDU_EFFECTIVE_STATS = ["Speed"];
-
 function getEffectiveGearScore(stats, effectiveStats) {
     let score = 0;
     for (const stat of effectiveStats) {
@@ -960,22 +1024,22 @@ function matchSudu(item, speed) {
     return speedSet || nonSpeedSets.includes(item.set);
 }
 
-function suduScore(item, score, speed) {
+function suduScore(item, gearScore, speed) {
     if (speed < 18) {
         return 0;
     }
     if (item.set == "SpeedSet") {
-        return evaluatePiecewise(score, [
+        return evaluatePiecewise(gearScore, [
             { when: s => s >= 78, value: s => 4 * s - 285 },
             { when: s => s >= 73, value: s => 3 * s - 207 },
             { when: s => s >= 68, value: s => 2 * s - 134 },
             { when: _ => true, value: _ => 0 },
         ]);
     }
-    return evaluatePiecewise(score, [
+    return evaluatePiecewise(gearScore, [
         { when: s => s >= 75, value: s => s - 69 },
         { when: s => s >= 70, value: s => 0.8 * (s - 67.5) },
-        { when: s => s >= 70, value: _ => 4.0 },
+        { when: s => s >= 67, value: _ => 4.0 },
         { when: _ => true, value: _ => 0 },
     ]);
 }
