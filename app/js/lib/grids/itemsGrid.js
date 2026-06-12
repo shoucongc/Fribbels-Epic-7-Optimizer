@@ -713,12 +713,14 @@ function calculateBailiScore(item) {
     // One-speed and speed scores are special bonuses and can be stacked.
     let bonusScore = 0;
     const bonusTags = [];
-    if (matchYisu(item, speed)) {
+    const hasYisu = matchYisu(item, speed);
+    const hasSudu = matchSudu(item, speed);
+    if (hasYisu) {
         bonusScore += yisuScore(speed);
         bonusTags.push("一速");
     }
     // 速度类别不能独立成立，必须先有一个主类别分数 > 0
-    if (mainScore > 0 && matchSudu(item, speed)) {
+    if (mainScore > 0 && hasSudu) {
         const speedBonus = suduScore(item, gearScore, speed);
         bonusScore += speedBonus;
         if (speedBonus > 0) {
@@ -726,8 +728,14 @@ function calculateBailiScore(item) {
         }
     }
 
-    const score = Math.max(0, Utils.round10ths(mainScore + bonusScore));
-    let classText = bailiClass;
+    // "未来可期" is a catch-all 10th category:
+    // only when no main category scored and both speed bonuses do not match.
+    const useFutureClass = mainScore <= 0 && !hasYisu && !hasSudu && gearScore >= 75;
+    const futureScore = useFutureClass ? Math.max(0, (2.0 / 3.0) * (Math.floor(gearScore) - 73.5)) : 0;
+
+    const baseScore = useFutureClass ? futureScore : (mainScore + bonusScore);
+    const score = Math.max(0, Utils.round10ths(baseScore));
+    let classText = useFutureClass ? "未来可期" : bailiClass;
     if (bonusTags.length > 0) {
         classText = bailiClass == "未分类"
             ? bonusTags.join(" + ")
